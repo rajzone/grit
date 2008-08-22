@@ -1,9 +1,4 @@
-trap("CHLD") do
-  begin
-    Process.wait(-1, Process::WNOHANG)
-  rescue Object
-  end
-end
+trap("CHLD") { Process.wait(-1, Process::WNOHANG) }
 
 module Grit
   
