@@ -37,6 +37,7 @@ module Grit
       def initialize(git_dir, options = {})
         @git_dir = git_dir
         @options = options
+        @packs = []
       end
       
       # returns the loose objects object lazily
@@ -281,6 +282,13 @@ module Grit
           log = truncate_arr(log, end_sha)
         end
         
+        # shorten the list if it's longer than max_count (had to get everything in branches)
+        if options[:max_count]
+          if (opt_len = options[:max_count].to_i) < log.size
+            log = log[0, opt_len]
+          end
+        end
+        
         if options[:pretty] == 'raw'
           log.map {|k, v| v }.join('')
         else
@@ -337,7 +345,7 @@ module Grit
                                         opts[:path_limiter])
                 add_sha = false 
               end
-              subarray += walk_log(psha, opts, (array.size + subarray.size + total_size)) 
+              subarray += walk_log(psha, opts, (array.size + total_size)) 
               next if opts[:first_parent]
             end
           
@@ -592,6 +600,53 @@ module Grit
         found_data
       end
       
+      # initialize a git repository
+      def self.init(dir, bare = false)
+
+        FileUtils.mkdir_p(dir) if !File.exists?(dir)
+
+        FileUtils.cd(dir) do
+          if(File.exists?('objects'))
+            return false # already initialized
+          else
+            # initialize directory
+            create_initial_config(bare)
+            FileUtils.mkdir_p('refs/heads')
+            FileUtils.mkdir_p('refs/tags')
+            FileUtils.mkdir_p('objects/info')
+            FileUtils.mkdir_p('objects/pack')
+            FileUtils.mkdir_p('branches')
+            add_file('description', 'Unnamed repository; edit this file to name it for gitweb.')
+            add_file('HEAD', "ref: refs/heads/master\n")
+            FileUtils.mkdir_p('hooks')
+            FileUtils.cd('hooks') do
+              add_file('applypatch-msg', '# add shell script and make executable to enable')
+              add_file('post-commit', '# add shell script and make executable to enable')
+              add_file('post-receive', '# add shell script and make executable to enable')
+              add_file('post-update', '# add shell script and make executable to enable')
+              add_file('pre-applypatch', '# add shell script and make executable to enable')
+              add_file('pre-commit', '# add shell script and make executable to enable')
+              add_file('pre-rebase', '# add shell script and make executable to enable')
+              add_file('update', '# add shell script and make executable to enable')
+            end
+            FileUtils.mkdir_p('info')
+            add_file('info/exclude', "# *.[oa]\n# *~")
+          end
+        end
+      end
+
+      def self.create_initial_config(bare = false)
+        bare ? bare_status = 'true' : bare_status = 'false'
+        config = "[core]\n\trepositoryformatversion = 0\n\tfilemode = true\n\tbare = #{bare_status}\n\tlogallrefupdates = true"
+        add_file('config', config)
+      end
+
+      def self.add_file(name, contents)
+        File.open(name, 'w') do |f|
+          f.write contents
+        end
+      end      
+      
       def close
         @packs.each do |pack|
           pack.close
@@ -618,6 +673,9 @@ module Grit
           alt = File.join(path, 'info/alternates')
           if File.exists?(alt)
             File.readlines(alt).each do |line|
+              if line[0, 2] == '..'
+                line = File.expand_path(File.join(@git_dir, line))
+              end
               load_loose(line.chomp)
               load_alternate_loose(line.chomp)
             end
@@ -641,6 +699,9 @@ module Grit
           alt = File.join(path, 'info/alternates')
           if File.exists?(alt)
             File.readlines(alt).each do |line|
+              if line[0, 2] == '..'
+                line = File.expand_path(File.join(@git_dir, line))
+              end
               full_pack = File.join(line.chomp, 'pack')
               load_packs(full_pack)
               load_alternate_packs(File.join(line.chomp))

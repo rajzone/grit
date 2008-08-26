@@ -10,6 +10,14 @@ module Grit
     
     attr_accessor :ruby_git_repo, :git_file_index
     
+    def init(options)
+      if options.size == 0
+        Grit::GitRuby::Repository.init(@git_dir)
+      else
+        method_missing('init', options) 
+      end
+    end
+    
     def cat_file(options, ref)
       if options[:t]
         file_type(ref)

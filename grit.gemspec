@@ -1,6 +1,6 @@
 Gem::Specification.new do |s|
   s.name     = "grit"
-  s.version  = "0.9.1"
+  s.version  = "0.9.3"
   s.date     = "2008-04-24"
   s.summary  = "Object model interface to a git repo"
   s.email    = "tom@rubyisawesome.com"
@@ -41,8 +41,22 @@ Gem::Specification.new do |s|
 		"lib/grit/tag.rb", 
 		"lib/grit/tree.rb", 
 		"lib/grit.rb"]
+  s.test_files = ["test/test_actor.rb", 
+      "test/test_blob.rb", "test/test_commit.rb", 
+      "test/test_config.rb", 
+      "test/test_diff.rb", 
+      "test/test_git.rb", 
+      "test/test_grit.rb", 
+      "test/test_head.rb", 
+      "test/test_real.rb", 
+      "test/test_reality.rb",
+      "test/test_remote.rb", 
+      "test/test_repo.rb", 
+      "test/test_tag.rb", 
+      "test/test_tree.rb"]
   s.rdoc_options = ["--main", "README.txt"]
   s.extra_rdoc_files = ["History.txt", "Manifest.txt", "README.txt"]
   s.add_dependency("mime-types", ["> 0.0.0"])
   s.add_dependency("diff-lcs", [">= 1.1.2"])
+  s.add_dependency("open4", ["> 0.0.0"])
 end
