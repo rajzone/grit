@@ -1,5 +1,3 @@
-trap("CHLD") { Process.wait(-1, Process::WNOHANG) }
-
 module Grit
   
   class Git
