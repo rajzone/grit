@@ -80,10 +80,7 @@ module Grit
     #
     # Returns Grit::Head (baked)
     def self.current(repo, options = {})
-      head = File.open(File.join(repo.path, 'HEAD')).read.chomp
-      if /ref: refs\/heads\/(.*)/.match(head)
-        self.new($1, repo.git.rev_parse(options, 'HEAD'))
-      end
+      self.new($1, repo.git.rev_parse(options, 'HEAD'))
     end
 
   end # Head
